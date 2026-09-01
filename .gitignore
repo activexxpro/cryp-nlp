@@ -19,3 +19,6 @@ data/raw/
 data/processed/
 
 .DS_Store
+
+data/raw/*
+data/processed/*
