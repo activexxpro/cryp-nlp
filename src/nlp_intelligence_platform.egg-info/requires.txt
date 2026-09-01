@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+transformers
+torch
+scikit-learn
+spacy
+datasets
+pandas
+
+[dev]
+pytest
+pytest-cov
+ruff
+mypy

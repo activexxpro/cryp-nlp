@@ -16,6 +16,8 @@ dependencies = [
     "torch",
     "scikit-learn",
     "spacy",
+    "datasets",
+    "pandas",
 ]
 
 [project.optional-dependencies]
