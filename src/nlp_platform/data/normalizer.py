@@ -1,6 +1,5 @@
 import re
 
-
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 

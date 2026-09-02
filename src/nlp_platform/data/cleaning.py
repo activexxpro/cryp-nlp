@@ -2,7 +2,6 @@ from collections.abc import Callable, Sequence
 
 from nlp_platform.data.normalizer import normalize_text
 
-
 TextTransform = Callable[[str], str]
 
 
