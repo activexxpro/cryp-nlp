@@ -3,7 +3,6 @@ from pathlib import Path
 from nlp_platform.data.loader import load_news_dataset
 from nlp_platform.data.splitter import split_train_dataset
 
-
 OUTPUT_DIR = Path("data/processed")
 
 

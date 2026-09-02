@@ -1,6 +1,4 @@
-from datasets import load_dataset
-from datasets import DatasetDict
-
+from datasets import DatasetDict, load_dataset
 
 EXPECTED_COLUMNS = {"text", "label"}
 
