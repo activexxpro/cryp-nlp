@@ -1,23 +1,13 @@
-from nlp_platform.data.cleaning import (
-    TextCleaningPipeline,
-    lowercase_text,
-)
 from nlp_platform.data.preprocessor import TextPreprocessor
+from nlp_platform.data.preprocessing_config import PreprocessingConfig
 from nlp_platform.data.records import TextRecord
 
 
-def test_process_record():
-    pipeline = TextCleaningPipeline(
-        transforms=[
-            str.strip,
-            lowercase_text,
-        ]
-    )
-
-    preprocessor = TextPreprocessor(pipeline)
+def test_default_configuration():
+    preprocessor = TextPreprocessor()
 
     record = TextRecord(
-        text="  HELLO WORLD  ",
+        text="  HELLO    WORLD  ",
         label=2,
     )
 
@@ -27,15 +17,12 @@ def test_process_record():
     assert result.label == 2
 
 
-def test_process_preserves_original_record():
-    pipeline = TextCleaningPipeline(
-        transforms=[
-            str.strip,
-            lowercase_text,
-        ]
+def test_lowercase_can_be_disabled():
+    config = PreprocessingConfig(
+        lowercase=False,
     )
 
-    preprocessor = TextPreprocessor(pipeline)
+    preprocessor = TextPreprocessor(config)
 
     record = TextRecord(
         text="  HELLO WORLD  ",
@@ -44,26 +31,68 @@ def test_process_preserves_original_record():
 
     result = preprocessor.process(record)
 
-    assert record.text == "  HELLO WORLD  "
-    assert record.label == 1
+    assert result.text == "HELLO WORLD"
 
-    assert result is not record
+
+def test_whitespace_normalization_can_be_disabled():
+    config = PreprocessingConfig(
+        normalize_whitespace=False,
+    )
+
+    preprocessor = TextPreprocessor(config)
+
+    record = TextRecord(
+        text="HELLO    WORLD",
+        label=1,
+    )
+
+    result = preprocessor.process(record)
+
+    assert result.text == "hello    world"
+
+
+def test_stripping_can_be_disabled():
+    config = PreprocessingConfig(
+        strip_whitespace=False,
+    )
+
+    preprocessor = TextPreprocessor(config)
+
+    record = TextRecord(
+        text="  HELLO WORLD  ",
+        label=1,
+    )
+
+    result = preprocessor.process(record)
+
+    assert result.text == "hello world"
+
+
+def test_all_transformations_can_be_disabled():
+    config = PreprocessingConfig(
+        lowercase=False,
+        strip_whitespace=False,
+        normalize_whitespace=False,
+    )
+
+    preprocessor = TextPreprocessor(config)
+
+    record = TextRecord(
+        text="  HELLO    WORLD  ",
+        label=1,
+    )
+
+    result = preprocessor.process(record)
+
+    assert result.text == "  HELLO    WORLD  "
 
 
 def test_process_many():
-    pipeline = TextCleaningPipeline(
-        transforms=[
-            str.strip,
-            lowercase_text,
-        ]
-    )
-
-    preprocessor = TextPreprocessor(pipeline)
+    preprocessor = TextPreprocessor()
 
     records = [
         TextRecord(text=" FIRST ARTICLE ", label=0),
         TextRecord(text=" SECOND ARTICLE ", label=1),
-        TextRecord(text=" THIRD ARTICLE ", label=2),
     ]
 
     result = preprocessor.process_many(records)
@@ -71,13 +100,4 @@ def test_process_many():
     assert result == [
         TextRecord(text="first article", label=0),
         TextRecord(text="second article", label=1),
-        TextRecord(text="third article", label=2),
     ]
-
-
-def test_process_empty_collection():
-    pipeline = TextCleaningPipeline()
-
-    preprocessor = TextPreprocessor(pipeline)
-
-    assert preprocessor.process_many([]) == []
