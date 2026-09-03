@@ -134,3 +134,103 @@ def test_pipeline_respects_preprocessing_config():
     result = pipeline.process(records)
 
     assert result == records
+
+
+def test_pipeline_handles_empty_collection():
+    pipeline = DatasetPreprocessingPipeline()
+
+    assert pipeline.process([]) == []
+
+
+def test_pipeline_applies_length_filter_after_normalization():
+    records = [
+        TextRecord(
+            text="   HI   ",
+            label=0,
+        ),
+        TextRecord(
+            text="   HELLO WORLD   ",
+            label=1,
+        ),
+    ]
+
+    pipeline = DatasetPreprocessingPipeline(
+        min_length=5,
+    )
+
+    result = pipeline.process(records)
+
+    assert result == [
+        TextRecord(
+            text="hello world",
+            label=1,
+        ),
+    ]
+
+
+def test_pipeline_deduplicates_after_normalization():
+    records = [
+        TextRecord(
+            text="  Hello  ",
+            label=0,
+        ),
+        TextRecord(
+            text="hello",
+            label=0,
+        ),
+        TextRecord(
+            text="HELLO",
+            label=0,
+        ),
+    ]
+
+    pipeline = DatasetPreprocessingPipeline()
+
+    result = pipeline.process(records)
+
+    assert result == [
+        TextRecord(
+            text="hello",
+            label=0,
+        ),
+    ]
+
+
+def test_pipeline_preserves_labels():
+    records = [
+        TextRecord(
+            text="Sports News",
+            label=1,
+        ),
+        TextRecord(
+            text="Business News",
+            label=2,
+        ),
+    ]
+
+    pipeline = DatasetPreprocessingPipeline()
+
+    result = pipeline.process(records)
+
+    assert [record.label for record in result] == [
+        1,
+        2,
+    ]
+
+
+def test_pipeline_preserves_record_order():
+    records = [
+        TextRecord(text="Third", label=2),
+        TextRecord(text="First", label=0),
+        TextRecord(text="Second", label=1),
+    ]
+
+    pipeline = DatasetPreprocessingPipeline()
+
+    result = pipeline.process(records)
+
+    assert [record.text for record in result] == [
+        "third",
+        "first",
+        "second",
+    ]
