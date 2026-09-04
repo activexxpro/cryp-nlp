@@ -120,3 +120,52 @@ def test_preprocess_cli_missing_input_fails(tmp_path: Path):
     )
 
     assert result.returncode != 0
+
+def test_preprocess_cli_creates_dataset_splits(tmp_path):
+    input_path = tmp_path / "input.jsonl"
+    output_dir = tmp_path / "prepared"
+
+    records = []
+
+    for index in range(100):
+        records.append(
+            {
+                "text": f"Example document {index}",
+                "label": index % 2,
+            }
+        )
+
+    input_path.write_text(
+        "\n".join(
+            json.dumps(record)
+            for record in records
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/preprocess_dataset.py",
+            "--input",
+            str(input_path),
+            "--output-dir",
+            str(output_dir),
+            "--name",
+            "test-dataset",
+            "--version",
+            "1.0.0",
+            "--source",
+            "unit-test",
+        ],
+        capture_output=True,
+        text=True,
+        env=_cli_environment(),
+    )
+
+    assert result.returncode == 0
+
+    assert (output_dir / "train.jsonl").exists()
+    assert (output_dir / "validation.jsonl").exists()
+    assert (output_dir / "test.jsonl").exists()
+    assert (output_dir / "metadata.json").exists()
