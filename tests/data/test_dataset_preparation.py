@@ -56,7 +56,7 @@ def test_prepare_applies_preprocessing():
         for record in all_records
     )
 
-    
+
 def test_prepare_preserves_labels():
     pipeline = DatasetPreparationPipeline()
 
@@ -135,3 +135,217 @@ def test_build_prepared_dataset():
         0: 10,
         1: 10,
     }
+def test_prepare_removes_duplicates():
+    pipeline = DatasetPreparationPipeline()
+
+    records = [
+        TextRecord(
+            text=f"Document class zero {index}",
+            label=0,
+        )
+        for index in range(10)
+    ] + [
+        TextRecord(
+            text=f"Document class one {index}",
+            label=1,
+        )
+        for index in range(10)
+    ]
+
+    records.extend(
+        [
+            TextRecord(
+                text="Duplicate document",
+                label=0,
+            ),
+            TextRecord(
+                text="Duplicate document",
+                label=0,
+            ),
+        ]
+    )
+
+    splits = pipeline.prepare(records)
+
+    prepared = (
+        splits.train
+        + splits.validation
+        + splits.test
+    )
+
+    texts = [record.text for record in prepared]
+
+    assert texts.count("duplicate document") == 1
+    assert len(texts) == len(set(texts))
+
+def test_prepare_normalizes_before_duplicate_detection():
+    pipeline = DatasetPreparationPipeline()
+
+    records = [
+        TextRecord(
+            text=f"Class zero document {index}",
+            label=0,
+        )
+        for index in range(10)
+    ] + [
+        TextRecord(
+            text=f"Class one document {index}",
+            label=1,
+        )
+        for index in range(10)
+    ]
+
+    records.extend(
+        [
+            TextRecord(
+                text="  Hello    World  ",
+                label=0,
+            ),
+            TextRecord(
+                text="hello world",
+                label=0,
+            ),
+        ]
+    )
+
+    splits = pipeline.prepare(records)
+
+    prepared = (
+        splits.train
+        + splits.validation
+        + splits.test
+    )
+
+    texts = [record.text for record in prepared]
+
+    assert texts.count("hello world") == 1
+
+    
+def test_keep_duplicates_configuration():
+    pipeline = DatasetPreparationPipeline(
+        remove_duplicate_records=False,
+    )
+
+    records = [
+        TextRecord(
+            text="Example document",
+            label=0,
+        )
+        for _ in range(10)
+    ] + [
+        TextRecord(
+            text="Another document",
+            label=1,
+        )
+        for _ in range(10)
+    ]
+
+    splits = pipeline.prepare(records)
+
+    prepared = (
+        splits.train
+        + splits.validation
+        + splits.test
+    )
+
+    assert len(prepared) == 20
+
+
+def test_prepare_applies_length_filter():
+    pipeline = DatasetPreparationPipeline(
+        min_length=10,
+        max_length=30,
+    )
+
+    records = [
+        TextRecord(
+            text=f"Document with sufficient length {index}",
+            label=index % 2,
+        )
+        for index in range(20)
+    ]
+
+    splits = pipeline.prepare(records)
+
+    prepared = (
+        splits.train
+        + splits.validation
+        + splits.test
+    )
+
+    assert all(
+        10 <= len(record.text) <= 30
+        for record in prepared
+    )
+
+
+def test_prepare_preserves_all_labels():
+    pipeline = DatasetPreparationPipeline()
+
+    records = [
+        TextRecord(
+            text=f"Document number {index}",
+            label=index % 2,
+        )
+        for index in range(100)
+    ]
+
+    splits = pipeline.prepare(records)
+
+    prepared = (
+        splits.train
+        + splits.validation
+        + splits.test
+    )
+
+    assert [record.label for record in prepared].count(0) == 50
+    assert [record.label for record in prepared].count(1) == 50
+
+
+def test_build_metadata_matches_processed_dataset():
+    pipeline = DatasetPreparationPipeline()
+
+    records = [
+        TextRecord(
+            text=f"Document number {index}",
+            label=index % 2,
+        )
+        for index in range(20)
+    ]
+
+    dataset = pipeline.build(
+        records,
+        name="test-dataset",
+        version="1.0.0",
+        source="unit-test",
+    )
+
+    assert dataset.metadata.num_records == dataset.size
+    assert (
+        dataset.metadata.num_classes
+        == dataset.distribution.num_classes
+    )
+
+
+def test_build_uses_processed_records():
+    pipeline = DatasetPreparationPipeline()
+
+    records = [
+        TextRecord(
+            text=f"  DOCUMENT {index}    TEXT  ",
+            label=index % 2,
+        )
+        for index in range(20)
+    ]
+
+    dataset = pipeline.build(records)
+
+    assert all(
+        record.text == record.text.lower()
+        for record in dataset.records
+    )
+
+    assert all(
+        "  " not in record.text
+        for record in dataset.records
+    )

@@ -19,11 +19,19 @@ class DatasetPreparationPipeline:
         self,
         preprocessing_pipeline: DatasetPreprocessingPipeline | None = None,
         split_config: SplitConfig | None = None,
+        min_length: int = 1,
+        max_length: int | None = None,
+        remove_duplicate_records: bool = True,
     ) -> None:
         self._preprocessing_pipeline = (
             preprocessing_pipeline
-            or DatasetPreprocessingPipeline()
+            or DatasetPreprocessingPipeline(
+                min_length=min_length,
+                max_length=max_length,
+                remove_duplicate_records=remove_duplicate_records,
+            )
         )
+
         self._split_config = split_config or SplitConfig()
 
     def prepare(
