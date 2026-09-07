@@ -1,6 +1,6 @@
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-import re
 
 
 _WORD_PATTERN = re.compile(r"\b\w+\b")
@@ -27,7 +27,13 @@ class Tokenizer(ABC):
 
 
 class BasicTokenizer(Tokenizer):
-    """Simple regex-based tokenizer."""
+    """Simple configurable word tokenizer."""
+
+    def __init__(
+        self,
+        lowercase: bool = True,
+    ) -> None:
+        self._lowercase = lowercase
 
     def tokenize(self, text: str) -> list[str]:
         """Split text into word-like tokens."""
@@ -35,4 +41,7 @@ class BasicTokenizer(Tokenizer):
         if not isinstance(text, str):
             raise TypeError("text must be a string")
 
-        return _WORD_PATTERN.findall(text.lower())
+        if self._lowercase:
+            text = text.lower()
+
+        return _WORD_PATTERN.findall(text)
