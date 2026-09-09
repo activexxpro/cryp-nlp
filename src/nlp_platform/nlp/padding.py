@@ -11,7 +11,19 @@ class SequencePadder:
         self,
         vocabulary: Vocabulary,
         config: EncodingConfig | None = None,
+        *,
+        max_length: int | None = None,
     ) -> None:
+        if config is not None and max_length is not None:
+            raise ValueError(
+                "provide either config or max_length, not both"
+            )
+
+        if max_length is not None:
+            config = EncodingConfig(
+                max_length=max_length,
+            )
+
         self._vocabulary = vocabulary
         self._config = config or EncodingConfig()
 
