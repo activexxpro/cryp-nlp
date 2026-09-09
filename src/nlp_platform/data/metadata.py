@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 @dataclass(frozen=True)
@@ -43,7 +43,7 @@ class DatasetMetadata:
             name=name,
             version=version,
             source=source,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             num_records=num_records,
             num_classes=num_classes,
         )

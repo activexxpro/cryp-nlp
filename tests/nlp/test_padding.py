@@ -1,5 +1,6 @@
 import pytest
 
+from nlp_platform.nlp.encoding_config import EncodingConfig
 from nlp_platform.nlp.padding import SequencePadder
 from nlp_platform.nlp.vocabulary import Vocabulary
 
@@ -102,3 +103,61 @@ def test_input_sequence_is_not_modified(
     padder.pad_or_truncate(token_ids)
 
     assert token_ids == [2, 4]
+
+def test_padding_can_be_disabled() -> None:
+    vocabulary = Vocabulary.build(
+        [["hello", "world"]]
+    )
+
+    padder = SequencePadder(
+        vocabulary=vocabulary,
+        config=EncodingConfig(
+            max_length=4,
+            padding=False,
+        ),
+    )
+
+    result = padder.pad_or_truncate([2, 3])
+
+    assert result == [2, 3]
+
+
+def test_truncation_can_be_disabled() -> None:
+    vocabulary = Vocabulary.build(
+        [["hello", "world"]]
+    )
+
+    padder = SequencePadder(
+        vocabulary=vocabulary,
+        config=EncodingConfig(
+            max_length=2,
+            truncation=False,
+        ),
+    )
+
+    result = padder.pad_or_truncate(
+        [2, 3, 4]
+    )
+
+    assert result == [2, 3, 4]
+
+
+def test_padding_and_truncation_can_be_disabled() -> None:
+    vocabulary = Vocabulary.build(
+        [["hello", "world"]]
+    )
+
+    padder = SequencePadder(
+        vocabulary=vocabulary,
+        config=EncodingConfig(
+            max_length=2,
+            padding=False,
+            truncation=False,
+        ),
+    )
+
+    result = padder.pad_or_truncate(
+        [2, 3, 4]
+    )
+
+    assert result == [2, 3, 4]

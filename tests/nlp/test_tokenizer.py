@@ -1,9 +1,8 @@
-import pytest
 
 from nlp_platform.nlp.tokenizer import (
     BasicTokenizer,
-    Tokenizer,
 )
+
 
 def test_basic_tokenizer_can_preserve_case():
     tokenizer = BasicTokenizer(

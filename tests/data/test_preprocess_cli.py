@@ -1,8 +1,9 @@
-import os
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+
 
 def _cli_environment() -> dict[str, str]:
     """Build an environment for running project CLI commands."""
@@ -49,6 +50,7 @@ def test_preprocess_cli(tmp_path):
         capture_output=True,
         text=True,
         env=_cli_environment(),
+        check=False,
     )
 
     assert result.returncode == 0, result.stderr
@@ -129,6 +131,7 @@ def test_preprocess_cli_can_keep_duplicates(tmp_path):
         capture_output=True,
         text=True,
         env=_cli_environment(),
+        check=False,
     )
 
     assert result.returncode == 0, result.stderr
@@ -225,6 +228,7 @@ def test_preprocess_cli_creates_dataset_splits(tmp_path):
         capture_output=True,
         text=True,
         env=_cli_environment(),
+        check=False,
     )
 
     assert result.returncode == 0

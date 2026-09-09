@@ -30,10 +30,10 @@ class TextLengthFilter:
         if length < self._min_length:
             return False
 
-        if self._max_length is not None and length > self._max_length:
-            return False
-
-        return True
+        return not (
+            self._max_length is not None
+            and length > self._max_length
+        )
 
     def filter(
         self,

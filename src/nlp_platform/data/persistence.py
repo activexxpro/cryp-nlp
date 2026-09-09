@@ -1,6 +1,6 @@
 import json
-from pathlib import Path
 from collections.abc import Sequence
+from pathlib import Path
 
 from nlp_platform.data.records import TextRecord
 

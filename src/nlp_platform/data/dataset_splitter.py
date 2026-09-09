@@ -33,7 +33,7 @@ def split_dataset(
 
     labels = [record.label for record in records]
 
-    train_records, temp_records, train_labels, temp_labels = (
+    train_records, temp_records, _train_labels, temp_labels = (
         train_test_split(
             list(records),
             labels,
