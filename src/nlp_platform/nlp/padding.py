@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+from nlp_platform.nlp.encoding_config import EncodingConfig
 from nlp_platform.nlp.vocabulary import Vocabulary
 
 
@@ -9,38 +10,46 @@ class SequencePadder:
     def __init__(
         self,
         vocabulary: Vocabulary,
-        max_length: int,
+        config: EncodingConfig | None = None,
     ) -> None:
-        if max_length < 1:
-            raise ValueError("max_length must be at least 1")
-
         self._vocabulary = vocabulary
-        self._max_length = max_length
+        self._config = config or EncodingConfig()
 
     def pad_or_truncate(
         self,
         token_ids: Sequence[int],
     ) -> list[int]:
-        """Pad or truncate a single encoded sequence."""
+        """Pad and truncate an encoded sequence."""
 
         ids = list(token_ids)
 
-        if len(ids) > self._max_length:
-            return ids[:self._max_length]
+        if (
+            self._config.truncation
+            and len(ids) > self._config.max_length
+        ):
+            ids = ids[:self._config.max_length]
 
-        padding_count = self._max_length - len(ids)
+        if not self._config.padding:
+            return ids
 
-        return ids + [
-            self._vocabulary.token_to_id(
-                Vocabulary.PAD_TOKEN
-            )
-        ] * padding_count
+        padding_count = (
+            self._config.max_length - len(ids)
+        )
+
+        if padding_count <= 0:
+            return ids
+
+        pad_id = self._vocabulary.token_to_id(
+            Vocabulary.PAD_TOKEN
+        )
+
+        return ids + [pad_id] * padding_count
 
     def pad_or_truncate_many(
         self,
         sequences: Sequence[Sequence[int]],
     ) -> list[list[int]]:
-        """Pad or truncate multiple encoded sequences."""
+        """Pad and truncate multiple sequences."""
 
         return [
             self.pad_or_truncate(sequence)
