@@ -5,10 +5,10 @@ from nlp_platform.nlp.encoded_dataset import (
     DatasetEncodingService,
     EncodedDataset,
 )
+from nlp_platform.nlp.encoder import TokenEncoder
 from nlp_platform.nlp.encoding_statistics import (
     calculate_encoding_statistics,
 )
-from nlp_platform.nlp.encoder import TokenEncoder
 from nlp_platform.nlp.nlp_pipeline import NLPPreprocessingPipeline
 from nlp_platform.nlp.padding import SequencePadder
 from nlp_platform.nlp.tokenizer import BasicTokenizer

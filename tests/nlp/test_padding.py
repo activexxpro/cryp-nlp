@@ -1,9 +1,9 @@
 import pytest
 
+from nlp_platform.nlp.encoding_config import EncodingConfig
 from nlp_platform.nlp.padding import SequencePadder
 from nlp_platform.nlp.vocabulary import Vocabulary
 
-from nlp_platform.nlp.encoding_config import EncodingConfig
 
 @pytest.fixture
 def padder() -> SequencePadder:

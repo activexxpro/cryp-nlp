@@ -4,15 +4,15 @@ from nlp_platform.data.records import TextRecord
 from nlp_platform.nlp.batch_encoder import BatchEncoder
 from nlp_platform.nlp.dataset_encoder import DatasetEncoder
 from nlp_platform.nlp.encoded_dataset import (
-    EncodedDataset,
     DatasetEncodingService,
+    EncodedDataset,
 )
+from nlp_platform.nlp.encoder import TokenEncoder
 from nlp_platform.nlp.encoding_validation import (
     EncodingValidationError,
     validate_batch_dimensions,
     validate_encoded_dataset,
 )
-from nlp_platform.nlp.encoder import TokenEncoder
 from nlp_platform.nlp.nlp_pipeline import NLPPreprocessingPipeline
 from nlp_platform.nlp.padding import SequencePadder
 from nlp_platform.nlp.tokenizer import BasicTokenizer

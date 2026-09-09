@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from nlp_platform.data.distribution import (
     ClassDistribution,

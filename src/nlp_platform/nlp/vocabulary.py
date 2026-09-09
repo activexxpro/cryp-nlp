@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 
 
 class Vocabulary:
@@ -46,9 +46,11 @@ class Vocabulary:
         }
 
         for token, frequency in sorted(counter.items()):
-            if frequency >= min_frequency:
-                if token not in token_to_id:
-                    token_to_id[token] = len(token_to_id)
+            if (
+                frequency >= min_frequency
+                and token not in token_to_id
+            ):
+                token_to_id[token] = len(token_to_id)
 
         return cls(token_to_id)
 

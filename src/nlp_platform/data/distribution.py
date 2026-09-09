@@ -1,6 +1,6 @@
 from collections import Counter
-from dataclasses import dataclass
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from nlp_platform.data.records import TextRecord
 

@@ -1,3 +1,4 @@
+from nlp_platform.data.records import TextRecord
 from nlp_platform.nlp.batch_encoder import BatchEncoder
 from nlp_platform.nlp.dataset_encoder import DatasetEncoder
 from nlp_platform.nlp.encoded_dataset import (
@@ -10,7 +11,6 @@ from nlp_platform.nlp.padding import SequencePadder
 from nlp_platform.nlp.tokenizer import BasicTokenizer
 from nlp_platform.nlp.training_dataset import TrainingDataset
 from nlp_platform.nlp.vocabulary import Vocabulary
-from nlp_platform.data.records import TextRecord
 
 
 def create_encoded_dataset(

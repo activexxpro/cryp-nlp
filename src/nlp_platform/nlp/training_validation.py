@@ -1,7 +1,7 @@
+from nlp_platform.nlp.encoded_dataset import EncodedDataset
 from nlp_platform.nlp.encoding_statistics import (
     calculate_encoding_statistics,
 )
-from nlp_platform.nlp.encoded_dataset import EncodedDataset
 from nlp_platform.nlp.training_dataset import TrainingDataset
 
 
@@ -43,11 +43,13 @@ def validate_training_dataset(
 ) -> None:
     """Validate all training, validation, and test splits."""
 
-    if expected_sequence_length is not None:
-        if expected_sequence_length < 1:
-            raise ValueError(
-                "expected_sequence_length must be at least 1"
-            )
+    if (
+        expected_sequence_length is not None
+        and expected_sequence_length < 1
+    ):
+        raise ValueError(
+            "expected_sequence_length must be at least 1"
+        )
 
     _validate_split(
         dataset.train,

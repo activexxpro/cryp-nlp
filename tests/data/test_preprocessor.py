@@ -1,5 +1,5 @@
-from nlp_platform.data.preprocessor import TextPreprocessor
 from nlp_platform.data.preprocessing_config import PreprocessingConfig
+from nlp_platform.data.preprocessor import TextPreprocessor
 from nlp_platform.data.records import TextRecord
 
 
