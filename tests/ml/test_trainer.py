@@ -1,9 +1,11 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset as TorchTensorDataset
+from torch.utils.data import DataLoader
+
+from nlp_platform.ml.tensor_dataset import TensorDataset
+from nlp_platform.ml.torch_dataset import NLPDataset
 
 from nlp_platform.ml.trainer import Trainer, TrainingResult
-
 
 def create_dataloader() -> DataLoader:
     input_ids = torch.tensor(
@@ -21,17 +23,16 @@ def create_dataloader() -> DataLoader:
         dtype=torch.long,
     )
 
-    dataset = TorchTensorDataset(
-        input_ids,
-        labels,
+    dataset = TensorDataset(
+        input_ids=input_ids,
+        labels=labels,
     )
 
     return DataLoader(
-        dataset,
+        NLPDataset(dataset),
         batch_size=2,
         shuffle=False,
     )
-
 
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
@@ -179,13 +180,13 @@ def test_empty_dataloader_returns_zero_loss() -> None:
         dtype=torch.long,
     )
 
-    dataset = TorchTensorDataset(
-        input_ids,
-        labels,
+    dataset = TensorDataset(
+        input_ids=input_ids,
+        labels=labels,
     )
 
     dataloader = DataLoader(
-        dataset,
+        NLPDataset(dataset),
         batch_size=2,
     )
 
