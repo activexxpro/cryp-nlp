@@ -29,6 +29,12 @@ class Trainer:
         self._optimizer = optimizer
         self._device = device
 
+    @property
+    def model(self) -> nn.Module:
+        """Return the model being trained."""
+
+        return self._model
+
     def train_epoch(
         self,
         dataloader: DataLoader,
