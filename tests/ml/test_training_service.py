@@ -11,6 +11,11 @@ from nlp_platform.ml.training_service import (
     TrainingService,
 )
 
+from pathlib import Path
+
+from nlp_platform.ml.best_checkpoint import BestCheckpointTracker
+from nlp_platform.ml.checkpoint import CheckpointManager
+
 
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
@@ -214,3 +219,108 @@ def test_invalid_epoch_count_raises() -> None:
         raise AssertionError(
             "TrainingService should reject zero epochs"
         )
+
+def test_training_without_checkpoint_tracker_returns_no_best(
+    ) -> None:
+    service = create_service(epochs=2)
+
+    result = service.train(
+        train_dataloader=create_dataloader(),
+        validation_dataloader=create_dataloader(),
+    )
+
+    assert result.best_epoch is None
+    assert result.best_validation_loss is None
+
+
+def test_training_with_checkpoint_tracker_saves_best_model(
+    tmp_path: Path,
+) -> None:
+    model = SmallClassifier()
+
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=0.01,
+    )
+
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        device=torch.device("cpu"),
+    )
+
+    evaluator = Evaluator(
+        model=model,
+        device=torch.device("cpu"),
+    )
+
+    checkpoint_manager = CheckpointManager(
+        tmp_path / "checkpoints"
+    )
+
+    tracker = BestCheckpointTracker(
+        checkpoint_manager
+    )
+
+    service = TrainingService(
+        trainer=trainer,
+        evaluator=evaluator,
+        epochs=3,
+        checkpoint_tracker=tracker,
+    )
+
+    result = service.train(
+        train_dataloader=create_dataloader(),
+        validation_dataloader=create_dataloader(),
+    )
+
+    assert result.best_epoch is not None
+    assert result.best_validation_loss is not None
+    assert tracker.best_path is not None
+    assert tracker.best_path.exists()
+
+
+def test_training_result_best_loss_matches_tracker(
+    tmp_path: Path,
+) -> None:
+    model = SmallClassifier()
+
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=0.01,
+    )
+
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        device=torch.device("cpu"),
+    )
+
+    evaluator = Evaluator(
+        model=model,
+        device=torch.device("cpu"),
+    )
+
+    tracker = BestCheckpointTracker(
+        CheckpointManager(
+            tmp_path / "checkpoints"
+        )
+    )
+
+    service = TrainingService(
+        trainer=trainer,
+        evaluator=evaluator,
+        epochs=3,
+        checkpoint_tracker=tracker,
+    )
+
+    result = service.train(
+        train_dataloader=create_dataloader(),
+        validation_dataloader=create_dataloader(),
+    )
+
+    assert result.best_epoch == tracker.best_epoch
+    assert (
+        result.best_validation_loss
+        == tracker.best_loss
+    )

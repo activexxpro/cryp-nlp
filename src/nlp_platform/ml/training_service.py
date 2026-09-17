@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from torch import nn
 from torch.utils.data import DataLoader
 
+from nlp_platform.ml.best_checkpoint import BestCheckpointTracker
 from nlp_platform.ml.evaluator import EvaluationResult, Evaluator
 from nlp_platform.ml.trainer import Trainer
 from nlp_platform.ml.training_history import (
@@ -17,6 +17,8 @@ class TrainingRunResult:
 
     history: TrainingHistory
     epochs_completed: int
+    best_epoch: int | None
+    best_validation_loss: float | None
 
 
 class TrainingService:
@@ -27,6 +29,7 @@ class TrainingService:
         trainer: Trainer,
         evaluator: Evaluator,
         epochs: int,
+        checkpoint_tracker: BestCheckpointTracker | None = None,
     ) -> None:
         if epochs < 1:
             raise ValueError(
@@ -36,6 +39,7 @@ class TrainingService:
         self._trainer = trainer
         self._evaluator = evaluator
         self._epochs = epochs
+        self._checkpoint_tracker = checkpoint_tracker
 
     def train(
         self,
@@ -68,7 +72,24 @@ class TrainingService:
                 )
             )
 
+            if self._checkpoint_tracker is not None:
+                self._checkpoint_tracker.update(
+                    model=self._trainer._model,
+                    validation_loss=validation_result.loss,
+                    epoch=epoch,
+                )
+
         return TrainingRunResult(
             history=history,
             epochs_completed=history.epoch_count,
+            best_epoch=(
+                self._checkpoint_tracker.best_epoch
+                if self._checkpoint_tracker is not None
+                else None
+            ),
+            best_validation_loss=(
+                self._checkpoint_tracker.best_loss
+                if self._checkpoint_tracker is not None
+                else None
+            ),
         )
