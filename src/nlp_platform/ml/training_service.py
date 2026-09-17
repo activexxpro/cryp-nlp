@@ -10,6 +10,7 @@ from nlp_platform.ml.training_history import (
     TrainingHistory,
 )
 
+from nlp_platform.ml.early_stopping import EarlyStopping
 
 @dataclass(frozen=True)
 class TrainingRunResult:
@@ -19,6 +20,7 @@ class TrainingRunResult:
     epochs_completed: int
     best_epoch: int | None
     best_validation_loss: float | None
+    stopped_early: bool
 
 
 class TrainingService:
@@ -30,6 +32,7 @@ class TrainingService:
         evaluator: Evaluator,
         epochs: int,
         checkpoint_tracker: BestCheckpointTracker | None = None,
+        early_stopping: EarlyStopping | None = None,
     ) -> None:
         if epochs < 1:
             raise ValueError(
@@ -40,6 +43,7 @@ class TrainingService:
         self._evaluator = evaluator
         self._epochs = epochs
         self._checkpoint_tracker = checkpoint_tracker
+        self._early_stopping = early_stopping
 
     def train(
         self,
@@ -49,6 +53,7 @@ class TrainingService:
         """Train the model for the configured number of epochs."""
 
         history = TrainingHistory(epochs=[])
+        stopped_early = False
 
         for epoch in range(1, self._epochs + 1):
             train_result = self._trainer.train_epoch(
@@ -74,10 +79,19 @@ class TrainingService:
 
             if self._checkpoint_tracker is not None:
                 self._checkpoint_tracker.update(
-                    model=self._trainer._model,
+                    model=self._trainer.model,
                     validation_loss=validation_result.loss,
                     epoch=epoch,
                 )
+
+            if self._early_stopping is not None:
+                self._early_stopping.update(
+                    validation_result.loss
+                )
+
+                if self._early_stopping.should_stop:
+                    stopped_early = True
+                    break
 
         return TrainingRunResult(
             history=history,
@@ -92,4 +106,5 @@ class TrainingService:
                 if self._checkpoint_tracker is not None
                 else None
             ),
+            stopped_early=stopped_early,
         )

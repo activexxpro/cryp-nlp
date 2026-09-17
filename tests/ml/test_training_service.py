@@ -16,6 +16,37 @@ from pathlib import Path
 from nlp_platform.ml.best_checkpoint import BestCheckpointTracker
 from nlp_platform.ml.checkpoint import CheckpointManager
 
+from nlp_platform.ml.early_stopping import (
+    EarlyStopping,
+    EarlyStoppingConfig,
+)
+
+from nlp_platform.ml.evaluator import EvaluationResult
+
+class ControlledEvaluator:
+    """Return predefined validation results."""
+
+    def __init__(
+        self,
+        losses: list[float],
+    ) -> None:
+        self._losses = losses
+        self._index = 0
+
+    def evaluate(
+        self,
+        dataloader: DataLoader,
+    ) -> EvaluationResult:
+        loss = self._losses[self._index]
+        self._index += 1
+
+        return EvaluationResult(
+            loss=loss,
+            accuracy=0.5,
+            samples=2,
+            batches=1,
+        )
+
 
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
@@ -324,3 +355,58 @@ def test_training_result_best_loss_matches_tracker(
         result.best_validation_loss
         == tracker.best_loss
     )
+
+def test_training_can_stop_early() -> None:
+    model = SmallClassifier()
+
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=0.01,
+    )
+
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        device=torch.device("cpu"),
+    )
+
+    evaluator = ControlledEvaluator(
+        losses=[
+            0.8,
+            0.9,
+            1.0,
+        ]
+    )
+
+    early_stopping = EarlyStopping(
+        EarlyStoppingConfig(
+            patience=1,
+        )
+    )
+
+    service = TrainingService(
+        trainer=trainer,
+        evaluator=evaluator,
+        epochs=10,
+        early_stopping=early_stopping,
+    )
+
+    result = service.train(
+        train_dataloader=create_dataloader(),
+        validation_dataloader=create_dataloader(),
+    )
+
+    assert result.stopped_early
+    assert result.epochs_completed == 2
+
+    
+def test_training_runs_all_epochs_without_early_stopping() -> None:
+    service = create_service(epochs=3)
+
+    result = service.train(
+        train_dataloader=create_dataloader(),
+        validation_dataloader=create_dataloader(),
+    )
+
+    assert result.epochs_completed == 3
+    assert not result.stopped_early
