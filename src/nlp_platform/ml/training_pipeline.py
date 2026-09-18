@@ -27,6 +27,7 @@ from nlp_platform.nlp.training_dataset import TrainingDataset
 from nlp_platform.ml.experiment_config import ExperimentConfig
 from nlp_platform.ml.seed import set_seed
 
+from nlp_platform.ml.experiment_result import ExperimentResult
 
 class TrainingPipeline:
     """Execute a complete NLP model training pipeline."""
@@ -55,13 +56,13 @@ class TrainingPipeline:
     def run(
         self,
         dataset: TrainingDataset,
-    ) -> TrainingRunResult:
+    ) -> ExperimentResult:
         """Train and evaluate the configured model."""
 
         set_seed(
             self._experiment_config.seed
         )
-        
+
         train_tensors = to_tensor_dataset(
             dataset.train
         )
@@ -138,7 +139,27 @@ class TrainingPipeline:
             early_stopping=early_stopping,
         )
 
-        return service.train(
+        training_result = service.train(
             train_dataloader=train_loader,
             validation_dataloader=validation_loader,
+        )
+
+        return ExperimentResult(
+            experiment_name=self._experiment_config.name,
+            seed=self._experiment_config.seed,
+            history=training_result.history,
+            epochs_completed=training_result.epochs_completed,
+            stopped_early=training_result.stopped_early,
+            best_epoch=training_result.best_epoch,
+            best_validation_loss=(
+                training_result.best_validation_loss
+            ),
+            best_checkpoint=(
+                str(checkpoint_tracker.best_path)
+                if (
+                    checkpoint_tracker is not None
+                    and checkpoint_tracker.best_path is not None
+                )
+                else None
+            ),
         )

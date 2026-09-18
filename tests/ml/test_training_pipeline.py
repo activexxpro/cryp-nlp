@@ -14,6 +14,8 @@ from nlp_platform.nlp.training_dataset import TrainingDataset
 from nlp_platform.ml.seed import set_seed
 from nlp_platform.ml.experiment_config import ExperimentConfig
 
+from nlp_platform.ml.experiment_result import ExperimentResult
+
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -110,7 +112,6 @@ def create_dataset() -> TrainingDataset:
         test=test,
     )
 
-
 def test_training_pipeline_runs() -> None:
     model = SmallClassifier()
 
@@ -123,19 +124,22 @@ def test_training_pipeline_runs() -> None:
         device_config=DeviceConfig(
             device="cpu"
         ),
-        dataloader_config=DataLoaderConfig(
-            batch_size=4,
-            shuffle=True,
-        ),
     )
 
     result = pipeline.run(
         create_dataset()
     )
 
+    assert isinstance(
+        result,
+        ExperimentResult,
+    )
     assert result.epochs_completed == 2
     assert result.history.epoch_count == 2
-
+    assert result.experiment_name == "baseline"
+    assert result.seed == 42
+    assert result.epochs_completed <= 10
+    assert isinstance(result.stopped_early, bool)
 
 def test_training_pipeline_records_metrics() -> None:
     model = SmallClassifier()
@@ -318,3 +322,38 @@ def test_same_experiment_seed_produces_same_history() -> None:
     assert first_result.history.validation_accuracies == (
         second_result.history.validation_accuracies
     )
+
+def test_training_pipeline_returns_checkpoint_path(
+    tmp_path: Path,
+) -> None:
+    model = SmallClassifier()
+
+    pipeline = TrainingPipeline(
+        model=model,
+        config=TrainingRunConfig(
+            epochs=2,
+            learning_rate=0.01,
+        ),
+        device_config=DeviceConfig(
+            device="cpu"
+        ),
+        checkpoint_directory=(
+            tmp_path / "checkpoints"
+        ),
+        experiment_config=ExperimentConfig(
+            name="checkpoint-test",
+            seed=42,
+        ),
+    )
+
+    result = pipeline.run(
+        create_dataset()
+    )
+
+    assert result.best_epoch is not None
+    assert result.best_validation_loss is not None
+    assert result.best_checkpoint is not None
+
+    assert Path(
+        result.best_checkpoint
+    ).exists()
