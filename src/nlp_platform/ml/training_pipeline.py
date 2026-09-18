@@ -24,6 +24,9 @@ from nlp_platform.ml.training_service import (
 )
 from nlp_platform.nlp.training_dataset import TrainingDataset
 
+from nlp_platform.ml.experiment_config import ExperimentConfig
+from nlp_platform.ml.seed import set_seed
+
 
 class TrainingPipeline:
     """Execute a complete NLP model training pipeline."""
@@ -35,6 +38,7 @@ class TrainingPipeline:
         device_config: DeviceConfig | None = None,
         dataloader_config: DataLoaderConfig | None = None,
         checkpoint_directory: str | Path | None = None,
+        experiment_config: ExperimentConfig | None = None,
     ) -> None:
         self._model = model
         self._config = config or TrainingRunConfig()
@@ -43,6 +47,10 @@ class TrainingPipeline:
             dataloader_config or DataLoaderConfig()
         )
         self._checkpoint_directory = checkpoint_directory
+        self._experiment_config = (
+            experiment_config or ExperimentConfig()
+        )
+
 
     def run(
         self,
@@ -50,6 +58,10 @@ class TrainingPipeline:
     ) -> TrainingRunResult:
         """Train and evaluate the configured model."""
 
+        set_seed(
+            self._experiment_config.seed
+        )
+        
         train_tensors = to_tensor_dataset(
             dataset.train
         )

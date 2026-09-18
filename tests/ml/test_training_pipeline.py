@@ -11,6 +11,7 @@ from nlp_platform.nlp.encoded_dataset import EncodedDataset
 from nlp_platform.nlp.model_input import ModelInput
 from nlp_platform.nlp.training_dataset import TrainingDataset
 
+from nlp_platform.ml.experiment_config import ExperimentConfig
 
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
@@ -224,4 +225,95 @@ def test_training_pipeline_supports_early_stopping() -> None:
     assert isinstance(
         result.stopped_early,
         bool,
+    )
+
+def test_training_pipeline_accepts_experiment_config() -> None:
+    model = SmallClassifier()
+
+    pipeline = TrainingPipeline(
+        model=model,
+        config=TrainingRunConfig(
+            epochs=1,
+            learning_rate=0.01,
+        ),
+        device_config=DeviceConfig(
+            device="cpu"
+        ),
+        experiment_config=ExperimentConfig(
+            name="reproducibility-test",
+            seed=123,
+        ),
+    )
+
+    result = pipeline.run(
+        create_dataset()
+    )
+
+    assert result.epochs_completed == 1
+
+def test_same_experiment_seed_produces_same_history() -> None:
+    set_seed(123)
+
+    first_model = SmallClassifier()
+
+    first_pipeline = TrainingPipeline(
+        model=first_model,
+        config=TrainingRunConfig(
+            epochs=2,
+            learning_rate=0.01,
+        ),
+        device_config=DeviceConfig(
+            device="cpu"
+        ),
+        dataloader_config=DataLoaderConfig(
+            batch_size=4,
+            shuffle=True,
+        ),
+        experiment_config=ExperimentConfig(
+            name="reproducible-run",
+            seed=123,
+        ),
+    )
+
+    first_result = first_pipeline.run(
+        create_dataset()
+    )
+
+    set_seed(123)
+
+    second_model = SmallClassifier()
+
+    second_pipeline = TrainingPipeline(
+        model=second_model,
+        config=TrainingRunConfig(
+            epochs=2,
+            learning_rate=0.01,
+        ),
+        device_config=DeviceConfig(
+            device="cpu"
+        ),
+        dataloader_config=DataLoaderConfig(
+            batch_size=4,
+            shuffle=True,
+        ),
+        experiment_config=ExperimentConfig(
+            name="reproducible-run",
+            seed=123,
+        ),
+    )
+
+    second_result = second_pipeline.run(
+        create_dataset()
+    )
+
+    assert first_result.history.train_losses == (
+        second_result.history.train_losses
+    )
+
+    assert first_result.history.validation_losses == (
+        second_result.history.validation_losses
+    )
+
+    assert first_result.history.validation_accuracies == (
+        second_result.history.validation_accuracies
     )
