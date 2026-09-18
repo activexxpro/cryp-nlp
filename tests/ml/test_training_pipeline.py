@@ -15,6 +15,7 @@ from nlp_platform.ml.seed import set_seed
 from nlp_platform.ml.experiment_config import ExperimentConfig
 
 from nlp_platform.ml.experiment_result import ExperimentResult
+from nlp_platform.ml.experiment_persistence import ExperimentResultPersistence
 
 class SmallClassifier(nn.Module):
     def __init__(self) -> None:
@@ -357,3 +358,32 @@ def test_training_pipeline_returns_checkpoint_path(
     assert Path(
         result.best_checkpoint
     ).exists()
+
+def test_training_pipeline_persists_experiment_result(tmp_path) -> None:
+    persistence = ExperimentResultPersistence(tmp_path)
+
+    pipeline = TrainingPipeline(
+        model=model,
+        training_config=training_config,
+        experiment_config=ExperimentConfig(
+            name="persistence-test",
+            seed=42,
+        ),
+        experiment_persistence=persistence,
+    )
+
+    result = pipeline.run(
+        train_dataset=train_dataset,
+        validation_dataset=validation_dataset,
+    )
+
+    output_path = tmp_path / "persistence-test.json"
+
+    assert output_path.exists()
+
+    restored = persistence.load(output_path)
+
+    assert restored.experiment_name == result.experiment_name
+    assert restored.seed == result.seed
+    assert restored.epochs_completed == result.epochs_completed
+    assert restored.history.epochs == result.history.epochs

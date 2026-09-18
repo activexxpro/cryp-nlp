@@ -28,6 +28,7 @@ from nlp_platform.ml.experiment_config import ExperimentConfig
 from nlp_platform.ml.seed import set_seed
 
 from nlp_platform.ml.experiment_result import ExperimentResult
+from nlp_platform.ml.experiment_persistence import ExperimentResultPersistence
 
 class TrainingPipeline:
     """Execute a complete NLP model training pipeline."""
@@ -40,6 +41,7 @@ class TrainingPipeline:
         dataloader_config: DataLoaderConfig | None = None,
         checkpoint_directory: str | Path | None = None,
         experiment_config: ExperimentConfig | None = None,
+        experiment_persistence: ExperimentResultPersistence | None = None,
     ) -> None:
         self._model = model
         self._config = config or TrainingRunConfig()
@@ -51,6 +53,7 @@ class TrainingPipeline:
         self._experiment_config = (
             experiment_config or ExperimentConfig()
         )
+        self._experiment_persistence = experiment_persistence
 
 
     def run(
@@ -144,16 +147,14 @@ class TrainingPipeline:
             validation_dataloader=validation_loader,
         )
 
-        return ExperimentResult(
+        result = ExperimentResult(
             experiment_name=self._experiment_config.name,
             seed=self._experiment_config.seed,
             history=training_result.history,
             epochs_completed=training_result.epochs_completed,
             stopped_early=training_result.stopped_early,
             best_epoch=training_result.best_epoch,
-            best_validation_loss=(
-                training_result.best_validation_loss
-            ),
+            best_validation_loss=training_result.best_validation_loss,
             best_checkpoint=(
                 str(checkpoint_tracker.best_path)
                 if (
@@ -163,3 +164,8 @@ class TrainingPipeline:
                 else None
             ),
         )
+
+        if self._experiment_persistence is not None:
+            self._experiment_persistence.save(result)
+
+        return result
