@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
+from torchgen import model
 
 from nlp_platform.ml.dataloader_config import DataLoaderConfig
 from nlp_platform.ml.device import DeviceConfig
@@ -359,12 +360,21 @@ def test_training_pipeline_returns_checkpoint_path(
         result.best_checkpoint
     ).exists()
 
-def test_training_pipeline_persists_experiment_result(tmp_path) -> None:
+def test_training_pipeline_persists_experiment_result(
+    tmp_path: Path,
+) -> None:
+    model = SmallClassifier()
     persistence = ExperimentResultPersistence(tmp_path)
 
     pipeline = TrainingPipeline(
         model=model,
-        training_config=training_config,
+        config=TrainingRunConfig(
+            epochs=2,
+            learning_rate=0.01,
+        ),
+        device_config=DeviceConfig(
+            device="cpu",
+        ),
         experiment_config=ExperimentConfig(
             name="persistence-test",
             seed=42,
@@ -373,8 +383,7 @@ def test_training_pipeline_persists_experiment_result(tmp_path) -> None:
     )
 
     result = pipeline.run(
-        train_dataset=train_dataset,
-        validation_dataset=validation_dataset,
+        create_dataset(),
     )
 
     output_path = tmp_path / "persistence-test.json"
@@ -386,4 +395,5 @@ def test_training_pipeline_persists_experiment_result(tmp_path) -> None:
     assert restored.experiment_name == result.experiment_name
     assert restored.seed == result.seed
     assert restored.epochs_completed == result.epochs_completed
+    assert restored.stopped_early == result.stopped_early
     assert restored.history.epochs == result.history.epochs
