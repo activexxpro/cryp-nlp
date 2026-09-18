@@ -11,6 +11,7 @@ from nlp_platform.nlp.encoded_dataset import EncodedDataset
 from nlp_platform.nlp.model_input import ModelInput
 from nlp_platform.nlp.training_dataset import TrainingDataset
 
+from nlp_platform.ml.seed import set_seed
 from nlp_platform.ml.experiment_config import ExperimentConfig
 
 class SmallClassifier(nn.Module):
